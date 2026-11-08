@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d2023">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sami #15">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Samis Flag Football</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: player card header (jersey #15) with season + team pickers, sticky tab bar, one column of match cards / stat panels; badger stripe as the only motif */
+:root{
+  --bg:#f3f4f1; --surface:#ffffff; --ink:#16181a; --muted:#5d6560; --line:#dde0da;
+  --badger:#1d2023; --stripe:#ffffff;
+  --flag:#e9b200; --flag-ink:#3a2c00; --flag-soft:#fff4cc;
+  --win:#1f7a44; --win-soft:#dff1e6; --loss:#b3362c; --loss-soft:#f7e1de; --tie:#6b6f73; --tie-soft:#e7e8e9;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121416; --surface:#1b1e21; --ink:#eceeea; --muted:#9aa29c; --line:#2c3034;
+  --badger:#0b0c0d; --stripe:#e8e9e6;
+  --flag:#f2c230; --flag-ink:#2a2000; --flag-soft:#3a3010;
+  --win:#5cc98a; --win-soft:#173524; --loss:#ef7d72; --loss-soft:#3b1d1a; --tie:#a5a9ad; --tie-soft:#2a2d30;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121416; --surface:#1b1e21; --ink:#eceeea; --muted:#9aa29c; --line:#2c3034;
+  --badger:#0b0c0d; --stripe:#e8e9e6;
+  --flag:#f2c230; --flag-ink:#2a2000; --flag-soft:#3a3010;
+  --win:#5cc98a; --win-soft:#173524; --loss:#ef7d72; --loss-soft:#3b1d1a; --tie:#a5a9ad; --tie-soft:#2a2d30;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:.01em}
+.num{font-variant-numeric:tabular-nums}
+a{color:inherit}
+button{font-family:var(--body)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--flag);outline-offset:2px}
+
+/* Header / player card */
+.hero{background:var(--badger);color:#f4f4f2;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0 auto 0 50%;width:34px;transform:translateX(150px) skewX(-14deg);background:var(--stripe);opacity:.92}
+.hero::before{content:"";position:absolute;inset:0 auto 0 50%;width:12px;transform:translateX(205px) skewX(-14deg);background:var(--flag)}
+.hero .wrap{position:relative;z-index:1;padding-block:28px 24px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.jersey{font-family:var(--display);font-weight:900;font-size:96px;line-height:.8;color:var(--flag);letter-spacing:-.02em}
+.who{min-width:0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#b9bdb8}
+.who h1{font-size:44px;font-weight:800;line-height:.95;margin-top:4px;text-transform:uppercase}
+.who p{margin:8px 0 0;color:#d6d8d4;font-size:15px}
+.pickers{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg span{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9da29d;align-self:center;margin-right:2px}
+.seg button{font-weight:600;font-size:14px;border:1.5px solid #5a5f63;background:transparent;color:#f4f4f2;border-radius:999px;padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--flag);border-color:var(--flag);color:var(--flag-ink)}
+.seg button:disabled{opacity:.4;cursor:not-allowed}
+
+/* Key numbers */
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:-1px}
+.keys div{background:var(--surface);padding:14px 12px}
+.keys b{display:block;font-family:var(--display);font-weight:800;font-size:34px;line-height:1}
+.keys b small{font-size:18px;color:var(--muted)}
+.keys span{font-size:13px;color:var(--muted)}
+.keys .hl b{color:var(--flag)}
+@media (max-width:520px){.keys{grid-template-columns:repeat(2,1fr)}.jersey{font-size:72px}.who h1{font-size:34px}.hero::after,.hero::before{display:none}}
+
+/* Tabs */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tabbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:4px;overflow-x:auto}
+.tabs a{font:700 15px var(--body);text-decoration:none;color:var(--muted);padding:14px 12px 12px;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--flag)}
+main{padding-block:20px 48px}
+section{display:grid;gap:14px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-h h2{font-size:28px;font-weight:800;text-transform:uppercase}
+.sec-h small{color:var(--muted);font-size:13px}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{font-weight:600;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* Match cards */
+.day{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.match{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;padding:12px 14px;text-decoration:none}
+.match:hover{border-color:var(--muted)}
+.res{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:24px}
+.res.S{background:var(--win-soft);color:var(--win)} .res.N{background:var(--loss-soft);color:var(--loss)} .res.U{background:var(--tie-soft);color:var(--tie)}
+.res.F{background:var(--bg);color:var(--muted);border:1.5px dashed var(--line);font-size:13px;font-family:var(--body);font-weight:700;text-align:center;line-height:1.1}
+.mid{min-width:0}
+.opp{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.meta{font-size:13px;color:var(--muted)}
+.venue{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.venue b{color:var(--ink);font-weight:600}
+.venue::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--flag);margin-right:6px;vertical-align:1px}
+.score{font-family:var(--display);font-weight:800;font-size:28px;text-align:right;line-height:1}
+.score small{display:block;font:500 12px var(--body);color:var(--muted);margin-top:4px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.tag.sami{background:var(--flag);color:var(--flag-ink);border-color:var(--flag)}
+.tag.absent{border-style:dashed}
+.match.star{border-color:var(--flag);box-shadow:inset 4px 0 0 var(--flag)}
+.match.future .score{font-size:22px;color:var(--muted)}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h3{font-size:20px;font-weight:800;text-transform:uppercase;margin-bottom:10px}
+.note{font-size:14px;color:var(--muted);margin:0}
+.callout{background:var(--flag-soft);border:1px solid var(--flag);border-radius:12px;padding:14px 16px}
+.callout p{margin:0}
+.callout b{font-family:var(--display);font-size:22px;text-transform:uppercase;display:block;margin-bottom:2px}
+
+/* Season cards (overview) */
+.seasons{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.scard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:8px;text-align:left;cursor:pointer;color:var(--ink)}
+.scard:hover{border-color:var(--muted)}
+.scard .t{font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;line-height:1}
+.scard .s{font-size:13px;color:var(--muted)}
+.scard .row{display:flex;gap:16px;flex-wrap:wrap}
+.scard .row div{display:grid}
+.scard .row b{font-family:var(--display);font-size:28px;line-height:1}
+.scard .row span{font-size:12px;color:var(--muted)}
+.scard .row .hl b{color:var(--flag)}
+
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:15px}
+th{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th.l,td.l{text-align:left}
+tr.me td,tr.us td{background:var(--flag-soft);font-weight:700}
+td.name{white-space:normal;min-width:150px}
+.legend{font-size:12px;color:var(--muted);margin-top:8px}
+
+.chart svg{display:block;width:100%;height:auto}
+.chart text{fill:var(--muted);font:500 11px var(--body)}
+.chart .axis{stroke:var(--line)}
+.chart .pos{fill:var(--win)} .chart .neg{fill:var(--loss)} .chart .zero{fill:var(--tie)}
+.chart .sami{fill:var(--flag)}
+
+.strip{display:grid;gap:4px}
+.strip i{height:28px;border-radius:5px;background:var(--line);display:block}
+.strip i.p{background:var(--ink)}
+.strip i.td{background:var(--flag)}
+.strip-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.strip-legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+
+footer{font-size:13px;color:var(--muted);padding-block:0 40px}
+@media (prefers-reduced-motion:no-preference){.match,.scard{transition:border-color .15s}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="jersey num" aria-label="Rückennummer 15">15</div>
+    <div class="who">
+      <div class="eyebrow">Münchendorf Badgers · Flag Football</div>
+      <h1>Samuel Neubauer</h1>
+      <p id="subline"></p>
+      <div class="pickers">
+        <div class="seg" role="group" aria-label="Saison"><span>Saison</span>
+          <button id="se-2026" type="button" data-season="2026">2026</button>
+          <button id="se-2027" type="button" data-season="2027">2027</button>
+        </div>
+        <div class="seg" role="group" aria-label="Team"><span>Team</span>
+          <button id="te-u13" type="button" data-team="U13">U13</button>
+          <button id="te-u15" type="button" data-team="U15">U15</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="keys num" id="keys"></div></div>
+
+<nav class="tabbar" aria-label="Bereiche">
+  <div class="wrap"><div class="tabs" id="tabs">
+    <a href="#ueberblick" data-tab="ueberblick">Überblick</a>
+    <a href="#spiele" data-tab="spiele">Spiele</a>
+    <a href="#statistik" data-tab="statistik">Statistik</a>
+    <a href="#tabelle" data-tab="tabelle">Tabelle</a>
+    <a href="#team" data-tab="team">Team</a>
+  </div></div>
+</nav>
+
+<main class="wrap" id="main"></main>
+
+<footer class="wrap">
+  Daten: AFBÖ auf clubee.com (Ergebnisse, Aufstellungen, Tabellen), Stand 8. November 2026. Ein Tipp auf ein Spiel öffnet die Originalseite.
+</footer>
+
+<script>
+const NAMES = {Bottig:"Jakob Bottig",Gabel:"Tobias Gabel",Laaber:"Jonas Laaber",Sami:"Samuel Neubauer",Schmutzer:"Anais Zoemi Schmutzer-Paz",Hoerl:"Fabian Hörl",Loitfelder:"Alexander Loitfelder",Hagner:"Philipp Hagner",Ziegelbauer:"Constantin Ziegelbauer",Nusser:"Constantin Nusser",Loeffler:"Felix Löffler",Boden:"Lukas Boden",Schachenhofer:"Tamika Schachenhofer",HobigerN:"Noah Hobiger",HobigerL:"Leonie Hobiger"};
+const ME = "Sami";
+// Game: p = players in lineup, s = {player:[TD, XP, 2PT, INT, Sack]}
+const r = (...a)=>a;
+const U13_2026 = ["Bottig","Gabel","Laaber","Sami","Schmutzer","Hoerl","Loitfelder","Hagner","Ziegelbauer","Loeffler"];
+const without = (arr,...x)=>arr.filter(n=>!x.includes(n));
+const plus = (arr,...x)=>arr.concat(x);
+
+const DATA = {
+ "2026": {
+  label:"Saison 2026 (Frühjahr 2026)",
+  U13: {
+   league:"FLA U13", group:"FLA U13/2", place:4, of:10,
+   games:[
+    {id:2806432,d:"2026-04-12",sp:1,home:true, opp:"Dark Angels U13",us:0,them:54,p:U13_2026,s:{}},
+    {id:2806436,d:"2026-04-12",sp:1,home:true, opp:"SG Murtal Bulls / Styrian Bears",us:19,them:14,p:U13_2026,s:{},nostats:true},
+    {id:2806438,d:"2026-04-12",sp:1,home:true, opp:"St. Pölten Invaders U13",us:18,them:42,p:U13_2026,s:{},nostats:true},
+    {id:2806444,d:"2026-04-25",sp:2,home:true, opp:"AFC Vienna Vikings",us:6,them:27,p:plus(without(U13_2026,"Hoerl","Ziegelbauer"),"Nusser"),s:{Laaber:r(1,0,0,0,0),Schmutzer:r(0,0,0,0,1)}},
+    {id:2806449,d:"2026-04-25",sp:2,home:false,opp:"Huskies Wels U13",us:39,them:12,p:plus(U13_2026,"Nusser"),s:{Gabel:r(0,0,0,1,0),Laaber:r(3,0,0,2,0),Loitfelder:r(0,0,0,2,0),Hagner:r(2,0,0,0,0),Loeffler:r(1,3,0,0,0)}},
+    {id:2806452,d:"2026-04-25",sp:2,home:true, opp:"AFC Grizzlies",us:27,them:20,p:plus(U13_2026,"Nusser"),s:{Bottig:r(1,0,0,0,0),Laaber:r(0,1,0,0,0),Hagner:r(2,0,0,0,0),Loeffler:r(1,2,0,0,0)}},
+    {id:2806455,d:"2026-05-10",sp:3,home:false,opp:"Weinviertel Spartans",us:32,them:0,p:plus(without(U13_2026,"Hoerl","Loeffler"),"Nusser"),s:{Bottig:r(1,0,0,1,0),Laaber:r(1,1,0,0,0),Loitfelder:r(0,0,0,2,1),Hagner:r(3,1,0,0,0)}},
+    {id:2806457,d:"2026-05-10",sp:3,home:false,opp:"St. Pölten Invaders U13",us:0,them:33,p:plus(without(U13_2026,"Hoerl","Loeffler"),"Nusser"),s:{}},
+    {id:2806462,d:"2026-05-10",sp:3,home:true, opp:"Huskies Wels U13",us:44,them:6,p:plus(without(U13_2026,"Hoerl","Loeffler"),"Nusser"),s:{Laaber:r(6,1,0,1,0),Sami:r(1,0,0,0,0),Loitfelder:r(0,0,0,1,0),Hagner:r(0,1,0,0,0),Nusser:r(0,0,0,0,2)}},
+    {id:2806475,d:"2026-05-14",sp:4,home:true, opp:"Weinviertel Spartans",us:34,them:6,p:plus(without(U13_2026,"Loeffler"),"Nusser"),s:{},nostats:true},
+    {id:2806479,d:"2026-05-14",sp:4,home:false,opp:"AFC Vienna Vikings",us:25,them:19,p:plus(without(U13_2026,"Loeffler"),"Nusser"),s:{},nostats:true},
+    {id:2806480,d:"2026-05-14",sp:4,home:false,opp:"AFC Grizzlies",us:7,them:32,p:plus(without(U13_2026,"Loeffler"),"Nusser"),s:{},nostats:true},
+    {id:2806483,d:"2026-05-25",sp:5,home:true, opp:"Vienna Knights U13",us:7,them:0,p:plus(without(U13_2026,"Sami"),"Nusser"),s:{Bottig:r(0,0,0,1,0),Hagner:r(1,0,0,0,0),Nusser:r(0,0,0,0,1),Loeffler:r(0,1,0,0,0)}},
+    {id:2806485,d:"2026-05-25",sp:5,home:false,opp:"SG Murtal Bulls / Styrian Bears",us:27,them:19,p:plus(U13_2026,"Nusser"),s:{Laaber:r(3,0,0,0,0),Loitfelder:r(0,0,0,2,0),Hagner:r(0,0,0,0,1),Nusser:r(0,0,0,0,1),Loeffler:r(1,3,0,0,0)}},
+    {id:2806487,d:"2026-05-25",sp:5,home:true, opp:"Graz Giants",us:28,them:21,p:plus(U13_2026,"Nusser"),s:{Bottig:r(1,1,0,0,0),Laaber:r(0,1,0,0,0),Loitfelder:r(0,0,0,1,0),Hagner:r(1,0,0,0,0),Nusser:r(0,0,0,0,1),Loeffler:r(2,2,0,2,0)}},
+    {id:2806490,d:"2026-05-25",sp:5,home:false,opp:"Dark Angels U13",us:6,them:38,p:plus(U13_2026,"Nusser"),s:{Loeffler:r(1,0,0,0,0)}},
+    {id:2806512,d:"2026-06-14",sp:7,home:false,opp:"Vienna Knights U13",us:21,them:12,p:plus(without(U13_2026,"Ziegelbauer"),"Nusser"),s:{Bottig:r(1,1,0,0,0),Laaber:r(0,1,0,0,0),Hagner:r(1,0,0,0,1),Loeffler:r(1,1,0,0,0)}},
+    {id:2806514,d:"2026-06-14",sp:7,home:false,opp:"Graz Giants",us:25,them:18,p:plus(U13_2026,"Nusser"),s:{Bottig:r(1,0,0,0,0),Laaber:r(1,1,0,0,0),Hagner:r(0,0,0,0,2),Loeffler:r(2,0,0,1,0)}}
+   ],
+   upcoming:[],
+   tables:[{name:"FLA U13/2",rows:[["Dark Angels U13",18,0,0,668,82],["St. Pölten Invaders U13",15,3,0,653,230],["AFC Vienna Vikings",14,4,0,510,263],["Münchendorf Badgers U13",12,6,0,362,354],["Graz Giants",10,8,0,394,354],["Vienna Knights U13",8,10,0,280,384],["AFC Grizzlies (Flag Jugend)",5,13,0,279,431],["Huskies Wels U13",4,14,0,193,488],["SG Murtal Bulls / Styrian Bears",2,16,0,232,529],["Weinviertel Spartans Flag",2,16,0,89,545]]}],
+   tableNote:"Endstand Frühjahr 2026.",
+   coach:"Heinz Kahler"
+  },
+  U15: null
+ },
+ "2027": {
+  label:"Saison 2027 (Herbst 2026 + Frühjahr 2027)",
+  U13: {
+   league:"FLA U13", group:"FLA U13/3 Herbst", place:5, of:6,
+   games:[
+    {id:2989301,d:"2026-09-13",sp:1,home:true, opp:"AFC Vienna Vikings",us:0,them:12,p:["Bottig","Laaber","Schachenhofer","Sami","Schmutzer","Nusser"],s:{}},
+    {id:2989304,d:"2026-09-13",sp:1,home:false,opp:"Stockerau Grizzlies",us:19,them:0,p:["Boden","Laaber","Schachenhofer","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Laaber:r(0,1,0,1,0),Sami:r(1,0,0,1,0),Nusser:r(2,0,0,0,0)}},
+    {id:2989308,d:"2026-09-13",sp:1,home:false,opp:"Huskies Wels U13",us:14,them:20,p:["Boden","Bottig","Laaber","Schachenhofer","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Bottig:r(0,0,0,1,0),Laaber:r(1,1,0,0,0),Sami:r(0,1,0,0,0)}},
+    {id:2989309,d:"2026-10-04",sp:2,home:true, opp:"Stockerau Grizzlies",us:19,them:0,p:["Bottig","Laaber","Schachenhofer","HobigerN","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Bottig:r(0,0,0,1,0),Laaber:r(0,0,0,1,0),HobigerN:r(1,0,0,0,0),Sami:r(1,1,0,0,0),Nusser:r(0,0,0,0,1),Loeffler:r(1,0,0,0,0)}},
+    {id:2989310,d:"2026-10-04",sp:2,home:false,opp:"St. Pölten Invaders U13",us:0,them:34,p:["Boden","Bottig","Laaber","Schachenhofer","HobigerN","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{}},
+    {id:2989314,d:"2026-10-04",sp:2,home:true, opp:"Huskies Wels U13",us:19,them:53,p:["Boden","Bottig","Laaber","Schachenhofer","HobigerN","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Laaber:r(1,1,0,0,0),Sami:r(2,0,0,0,0),Loeffler:r(0,0,0,1,0)}},
+    {id:2989318,d:"2026-10-17",sp:3,home:false,opp:"AFC Vienna Vikings",us:12,them:35,p:["Bottig","Schachenhofer","HobigerN","Ziegelbauer","Nusser","Loeffler"],s:{HobigerN:r(1,0,0,1,0),Loeffler:r(1,0,0,1,0)}},
+    {id:2989320,d:"2026-10-17",sp:3,home:true, opp:"Vienna Knights U13",us:12,them:21,p:["Bottig","Schachenhofer","HobigerN","Ziegelbauer","Nusser","Loeffler"],s:{Schachenhofer:r(0,0,0,0,1),Loeffler:r(2,0,0,0,0)}},
+    {id:2989325,d:"2026-11-08",sp:4,home:true, opp:"St. Pölten Invaders U13",us:7,them:21,p:["Boden","Bottig","Laaber","Schachenhofer","HobigerN","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Laaber:r(1,1,0,0,0)}},
+    {id:2989327,d:"2026-11-08",sp:4,home:false,opp:"Vienna Knights U13",us:32,them:60,p:["Boden","Bottig","Laaber","Schachenhofer","HobigerN","Sami","Schmutzer","Ziegelbauer","Nusser","Loeffler"],s:{Laaber:r(1,0,0,0,0),Sami:r(4,1,0,0,0),Schmutzer:r(0,1,0,0,0),Nusser:r(0,0,0,0,1)}}
+   ],
+   upcoming:[
+    {id:2989200,d:"2027-04-04",t:"10:00",home:true, opp:"Danube Dragons U13 (F)"},
+    {id:2989202,d:"2027-04-04",t:"11:15",home:false,opp:"Stockerau Grizzlies"},
+    {id:2989206,d:"2027-04-04",t:"13:45",home:false,opp:"SG Pannonia Eagles/Weinviertel Spartans"},
+    {id:2989207,d:"2027-04-17",t:"10:00",home:true, opp:"Stockerau Grizzlies"},
+    {id:2989208,d:"2027-04-17",t:"12:30",home:false,opp:"Dark Angels U13"},
+    {id:2989212,d:"2027-04-17",t:"13:45",home:true, opp:"SG Pannonia Eagles/Weinviertel Spartans"},
+    {id:2989217,d:"2027-05-15",t:"10:15",home:false,opp:"Danube Dragons U13 (F)"},
+    {id:2989219,d:"2027-05-15",t:"11:30",home:true, opp:"SG Mostviertel Bastards / AFC Blue Hawks"},
+    {id:2989223,d:"2027-06-06",t:"10:15",home:true, opp:"Dark Angels U13"},
+    {id:2989225,d:"2027-06-06",t:"11:30",home:false,opp:"SG Mostviertel Bastards / AFC Blue Hawks"}
+   ],
+   tables:[{name:"FLA U13/3 Herbst",rows:[["St. Pölten Invaders U13",10,0,0,302,66],["AFC Vienna Vikings",8,2,0,271,149],["Huskies Wels U13",5,4,1,213,241],["Vienna Knights U13",3,6,1,232,251],["Münchendorf Badgers U13",2,8,0,134,256],["Stockerau Grizzlies",1,9,0,84,273]]},
+           {name:"FLA U13/1 Frühjahr (ab April 2027)",rows:[["Danube Dragons U13 (F)",0,0,0,0,0],["Dark Angels U13",0,0,0,0,0],["SG Mostviertel Bastards / AFC Blue Hawks",0,0,0,0,0],["Münchendorf Badgers U13",0,0,0,0,0],["SG Pannonia Eagles/Weinviertel Spartans",0,0,0,0,0],["Stockerau Grizzlies",0,0,0,0,0]]}],
+   tableNote:"Herbstrunde abgeschlossen. Im Frühjahr spielen die Badgers in der stärksten Gruppe U13/1.",
+   coach:"Fabian Knapp (Cheftrainer)"
+  },
+  U15: {
+   league:"FLA U15", group:"FLA U15/3 Herbst", place:6, of:6,
+   games:[
+    {id:2989839,d:"2026-10-11",sp:1,home:false,opp:"Swarco Raiders U15",us:13,them:46,p:["Gabel","Laaber","HobigerL","Sami","Schmutzer","HobigerN","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{Laaber:r(0,0,0,1,0),HobigerL:r(1,0,0,0,0),Loitfelder:r(1,1,0,1,0)}},
+    {id:2989841,d:"2026-10-11",sp:1,home:true, opp:"AFC Vienna Vikings (U15)",us:0,them:34,p:["Gabel","Laaber","HobigerL","Sami","Schmutzer","HobigerN","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{}},
+    {id:2989845,d:"2026-10-11",sp:1,home:false,opp:"Pannonia Eagles U15",us:31,them:38,p:["Gabel","Laaber","HobigerL","Sami","Schmutzer","HobigerN","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{Gabel:r(0,0,0,1,0),HobigerL:r(1,0,0,0,0),HobigerN:r(1,0,0,0,0),Hagner:r(3,1,0,0,0)}},
+    {id:2989849,d:"2026-10-18",sp:2,home:true, opp:"Vienna Knights U15",us:7,them:40,p:["Gabel","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{Sami:r(1,0,0,0,1),Nusser:r(0,0,0,0,1),Loeffler:r(0,1,0,0,0)}},
+    {id:2989851,d:"2026-10-18",sp:2,home:true, opp:"SG Carnuntum Legionaries",us:27,them:21,p:["Gabel","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{Sami:r(1,2,0,0,0),Hagner:r(2,0,0,0,0),Loeffler:r(1,1,0,0,0)}},
+    {id:2989854,d:"2026-10-26",sp:3,home:false,opp:"SG Carnuntum Legionaries",us:0,them:30,p:["Gabel","Laaber","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Nusser"],s:{}},
+    {id:2989856,d:"2026-10-26",sp:3,home:true, opp:"Pannonia Eagles U15",us:7,them:32,p:["Gabel","Laaber","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Nusser"],s:{Laaber:r(1,0,0,0,0),Sami:r(0,1,0,0,0)}},
+    {id:2989860,d:"2026-10-26",sp:3,home:false,opp:"Vienna Knights U15",us:0,them:32,p:["Gabel","Laaber","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Nusser"],s:{Sami:r(0,0,0,1,0)}},
+    {id:2989862,d:"2026-11-07",sp:4,home:true, opp:"Swarco Raiders U15",us:14,them:48,p:["Gabel","Laaber","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Loitfelder","Hagner","Loeffler"],s:{HobigerN:r(2,0,0,0,0),Hoerl:r(0,0,0,0,1)}},
+    {id:2989863,d:"2026-11-07",sp:4,home:false,opp:"AFC Vienna Vikings (U15)",us:6,them:32,p:["Gabel","Laaber","HobigerN","Sami","Schmutzer","HobigerL","Hoerl","Loitfelder","Hagner","Nusser","Loeffler"],s:{Gabel:r(0,0,0,1,0),Loitfelder:r(1,0,0,0,0)}}
+   ],
+   upcoming:[
+    {id:2989868,d:"2027-04-24",t:"10:00",home:false,opp:"Generali Invaders St. Pölten U15"},
+    {id:2989873,d:"2027-04-24",t:"12:30",home:true, opp:"SG Carnuntum Legionaries"},
+    {id:2989875,d:"2027-04-24",t:"13:45",home:false,opp:"Telfs Patriots U15"},
+    {id:2989878,d:"2027-05-06",t:"11:15",home:false,opp:"Vienna Knights U15"},
+    {id:2989880,d:"2027-05-06",t:"12:30",home:false,opp:"Pannonia Eagles U15"},
+    {id:2989886,d:"2027-05-22",t:"12:30",home:false,opp:"SG Carnuntum Legionaries"},
+    {id:2989888,d:"2027-05-22",t:"13:45",home:true, opp:"Generali Invaders St. Pölten U15"},
+    {id:2989891,d:"2027-05-27",t:"11:15",home:true, opp:"Vienna Knights U15"},
+    {id:2989893,d:"2027-05-27",t:"12:30",home:true, opp:"Pannonia Eagles U15"},
+    {id:2989897,d:"2027-05-27",t:"15:00",home:true, opp:"Telfs Patriots U15"}
+   ],
+   tables:[{name:"FLA U15/3 Herbst",rows:[["AFC Vienna Vikings (U15)",10,0,0,346,130],["Swarco Raiders U15",8,2,0,354,114],["Vienna Knights U15",6,4,0,238,216],["Pannonia Eagles U15",3,7,0,166,276],["SG Carnuntum Legionaries",2,8,0,142,262],["Münchendorf Badgers U15",1,9,0,105,353]]},
+           {name:"FLA U15/3 Frühjahr (ab April 2027)",rows:[["Generali Invaders St. Pölten U15",0,0,0,0,0],["Telfs Patriots U15",0,0,0,0,0],["SG Carnuntum Legionaries",0,0,0,0,0],["Pannonia Eagles U15",0,0,0,0,0],["Vienna Knights U15",0,0,0,0,0],["Münchendorf Badgers U15",0,0,0,0,0]]}],
+   tableNote:"Herbstrunde abgeschlossen. Sami spielt in der U15 bei den Älteren mit, deshalb sind die Gegner hier deutlich stärker.",
+   coach:"Heinz Kahler"
+  }
+ }
+};
+
+// Austragungsort: bei den Badgers spielen alle Spiele eines Spieltags am selben Ort (Turniermodus)
+const P = {
+ lanz:["SC Lanzendorf","Eichenstraße 1, Lanzendorf"], inv:["Invaders Field","Edlinggasse 1, St. Pölten"],
+ baum:["Sportplatz Baumgarten","Franz Kovacsich-Platz, Baumgarten"], mist:["Sportzentrum Mistelbach","Zum Sportzentrum 521, Mistelbach"],
+ muen:["Sportplatz Münchendorf","Sportplatzstraße 7, Münchendorf"], au:["Stadion Alte Au","Alte Au 6, Stockerau"],
+ sarl:["SC Sarling","Unterhausstraße 30, Ybbs an der Donau"], kren:["Sportplatz Krensdorf","Sportplatzgasse 9–11, Krensdorf"],
+ phoe:["Phönix Platz","Alfred-Horn-Straße 2, Schwechat"], rav:["Footballzentrum Ravelin","Bleriotgasse 3, Wien"]
+};
+const VENUE = {
+ "U13|2026-04-12":P.lanz,"U13|2026-04-25":P.inv,"U13|2026-05-25":P.baum,"U13|2026-06-14":P.mist,
+ "U13|2026-09-13":P.muen,"U13|2026-10-04":P.au,"U13|2026-11-08":P.muen,
+ "U13|2027-04-04":P.sarl,"U13|2027-04-17":P.kren,"U13|2027-05-15":P.kren,"U13|2027-06-06":P.lanz,
+ "U15|2026-10-11":P.phoe,"U15|2026-10-18":P.kren,"U15|2026-10-26":P.kren,"U15|2026-11-07":P.rav,
+ "U15|2027-05-06":P.inv,"U15|2027-05-22":P.phoe,"U15|2027-05-27":P.inv
+};
+const venueLine = (tm,d) => { const v = VENUE[tm+"|"+d]; return `<div class="venue">${v?`<b>${v[0]}</b> · ${v[1]}`:"Ort nicht angegeben"}</div>`; };
+const $ = s => document.querySelector(s);
+const fmtDate = iso => new Date(iso+"T12:00:00").toLocaleDateString("de-AT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
+const result = g => g.us>g.them?"S":g.us<g.them?"N":"U";
+const STAT = ["TD","XP","2PT","INT","Sack"];
+const STATLONG = {TD:"Touchdowns",XP:"Extrapunkte","2PT":"2-Punkte-Versuche",INT:"Interceptions",Sack:"Sacks"};
+const sum = (a,f)=>a.reduce((x,y)=>x+f(y),0);
+
+function totals(team){
+  const t = {};
+  for (const g of team.games){
+    for (const n of g.p) (t[n] ??= {gp:0,v:[0,0,0,0,0]}).gp++;
+    for (const [n,v] of Object.entries(g.s)) v.forEach((x,i)=>(t[n] ??= {gp:0,v:[0,0,0,0,0]}).v[i]+=x);
+  }
+  return t;
+}
+function samLine(team){ const t = totals(team)[ME] || {gp:0,v:[0,0,0,0,0]}; return t; }
+
+let season = "2027", team = "U15", filter = "alle";
+try { const s = JSON.parse(localStorage.getItem("sami-sel")||"null"); if (s && DATA[s.season] && DATA[s.season][s.team]) { season = s.season; team = s.team; } } catch(e){}
+const cur = () => DATA[season][team];
+
+function renderKeys(){
+  const T = cur(), me = samLine(T), W = T.games.filter(g=>result(g)==="S").length, L = T.games.filter(g=>result(g)==="N").length, U = T.games.length-W-L;
+  $("#keys").innerHTML = `<div class="hl"><b>${me.gp}<small>/${T.games.length}</small></b><span>Spiele von Sami</span></div>
+    <div class="hl"><b>${me.v[0]}</b><span>Touchdown${me.v[0]===1?"":"s"} von Sami</span></div>
+    <div><b>${W}–${L}${U?"–"+U:""}</b><span>Siege – Niederlagen${U?" – Unent.":""}</span></div>
+    <div><b>${T.place}.</b><span>Platz in ${T.group}</span></div>`;
+}
+
+function matchCard(g){
+  const r = result(g), played = g.p.includes(ME), mine = g.s[ME];
+  const tags = [];
+  if (!played) tags.push(`<span class="tag absent">Sami nicht dabei</span>`);
+  else if (mine){ STAT.forEach((s,i)=>{ if (mine[i]) tags.push(`<span class="tag sami">Sami: ${mine[i]} ${s}</span>`); }); }
+  else tags.push(`<span class="tag">Sami gespielt</span>`);
+  if (g.nostats) tags.push(`<span class="tag">keine Einzelstatistik erfasst</span>`);
+  const rl = {S:"Sieg",N:"Niederlage",U:"Unentschieden"}[r];
+  return `<a class="match${mine?" star":""}" href="https://www.clubee.com/afbo/games/${g.id}" target="_blank" rel="noopener">
+    <div class="res ${r}" aria-label="${rl}">${r}</div>
+    <div class="mid"><div class="opp">${g.home?"vs":"@"} ${g.opp}</div>
+      <div class="meta">${fmtDate(g.d)} · ${g.home?"Heim":"Auswärts"}</div>
+      ${venueLine(team,g.d)}
+      <div class="tags">${tags.join("")}</div></div>
+    <div class="score num">${g.us}:${g.them}<small>${rl}</small></div></a>`;
+}
+function futureCard(u, showTeam){
+  return `<a class="match future" href="https://www.clubee.com/afbo/games/${u.id}" target="_blank" rel="noopener">
+    <div class="res F">${u.pending?"offen":u.t}</div>
+    <div class="mid"><div class="opp">${u.home?"vs":"@"} ${u.opp}</div>
+      <div class="meta">${fmtDate(u.d)} · ${u.t} Uhr${showTeam?" · "+showTeam:""}</div>
+      ${venueLine(showTeam||team,u.d)}
+      ${u.pending?`<div class="tags"><span class="tag">Ergebnis noch nicht eingetragen</span></div>`:""}</div>
+    <div class="score num">${u.pending?"–:–":"vs"}</div></a>`;
+}
+
+function viewUeberblick(){
+  const cards = [];
+  let gp=0, games=0, v=[0,0,0,0,0];
+  for (const s of ["2027","2026"]) for (const tm of ["U13","U15"]){
+    const T = DATA[s][tm]; if (!T) continue;
+    const me = samLine(T); gp+=me.gp; games+=T.games.length; me.v.forEach((x,i)=>v[i]+=x);
+    const W = T.games.filter(g=>result(g)==="S").length;
+    cards.push(`<button class="scard" type="button" data-go="${s}|${tm}">
+      <div class="t">${tm} · ${s}</div><div class="s">${T.group} · Platz ${T.place} von ${T.of}</div>
+      <div class="row"><div><b>${me.gp}/${T.games.length}</b><span>Spiele</span></div><div class="hl"><b>${me.v[0]}</b><span>TD</span></div><div><b>${me.v[1]}</b><span>XP</span></div><div><b>${W}–${T.games.length-W}</b><span>Team S–N</span></div></div>
+    </button>`);
+  }
+  const next = [];
+  for (const tm of ["U13","U15"]) for (const u of DATA["2027"][tm].upcoming) next.push({...u,tm});
+  next.sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+  const pending = next.filter(u=>u.pending), future = next.filter(u=>!u.pending).slice(0,3);
+  return `<section>
+   <div class="sec-h"><h2>Samis Karriere</h2><small>alle erfassten Spiele seit April 2026</small></div>
+   <div class="keys num" style="margin-top:0">
+     <div class="hl"><b>${gp}</b><span>Spiele gesamt</span></div>
+     <div class="hl"><b>${v[0]}</b><span>Touchdowns</span></div>
+     <div><b>${v[1]}</b><span>Extrapunkte</span></div>
+     <div><b>${v[3]+v[4]}</b><span>Interceptions + Sacks</span></div>
+   </div>
+   <div class="callout"><b>Bestes Spiel bisher: 4 Touchdowns</b><p>8. November 2026, U13 bei den Vienna Knights: Sami hat 4 Touchdowns und 1 Extrapunkt erzielt, also 25 der 32 Badgers-Punkte. In der U15 war er beim einzigen Herbstsieg (27:21 gegen Carnuntum) mit 1 Touchdown und 2 Extrapunkten dabei.</p></div>
+   <div class="sec-h"><h2>Saisonen</h2><small>Tippen zum Öffnen</small></div>
+   <div class="seasons">${cards.join("")}</div>
+   <div class="sec-h"><h2>Nächste Spiele</h2><small>Frühjahr 2027</small></div>
+   ${pending.map(u=>futureCard(u,u.tm)).join("")}${future.map(u=>futureCard(u,u.tm)).join("")}
+   <p class="note">Sami spielt in der Saison 2027 in beiden Teams. In der Saison 2026 hatten die Badgers noch kein U15-Team. Alle Spiele eines Spieltags finden am selben Ort statt.</p>
+  </section>`;
+}
+
+function viewSpiele(){
+  const T = cur();
+  let list = T.games.slice();
+  if (filter==="siege") list = list.filter(g=>result(g)==="S");
+  if (filter==="sami") list = list.filter(g=>g.s[ME]);
+  let html = `<div class="sec-h"><h2>Spiele ${team} · ${season}</h2><small>${T.games.length} gespielt${T.upcoming.length?` · ${T.upcoming.length} geplant`:""}</small></div>
+   <div class="chips" role="group" aria-label="Filter">
+     <button id="f-alle" type="button" data-f="alle" aria-pressed="${filter==="alle"}">Alle</button>
+     <button id="f-siege" type="button" data-f="siege" aria-pressed="${filter==="siege"}">Nur Siege</button>
+     <button id="f-sami" type="button" data-f="sami" aria-pressed="${filter==="sami"}">Samis Highlights</button>
+   </div>`;
+  let last = null;
+  for (const g of list){
+    if (g.sp!==last){ html += `<div class="day">Spieltag ${g.sp} · ${fmtDate(g.d)}</div>`; last = g.sp; }
+    html += matchCard(g);
+  }
+  if (!list.length) html += `<p class="note">Keine Spiele für diesen Filter.</p>`;
+  if (T.upcoming.length && filter==="alle"){
+    html += `<div class="sec-h" style="margin-top:12px"><h2>Noch offen</h2><small>Zeiten laut Spielplan</small></div>`;
+    html += T.upcoming.map(u=>futureCard(u)).join("");
+  }
+  return `<section>${html}</section>`;
+}
+
+function chart(games){
+  const n = games.length, w = 720, h = 230, pad = {l:30,r:8,t:16,b:30};
+  const max = 50, iw = w-pad.l-pad.r, ih = h-pad.t-pad.b, mid = pad.t+ih/2, bw = iw/n;
+  const y = v => mid - (Math.max(-max,Math.min(max,v))/max)*(ih/2);
+  let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Punktedifferenz pro Spiel">`;
+  for (const v of [-50,-25,0,25,50]) s += `<line class="axis" x1="${pad.l}" x2="${w-pad.r}" y1="${y(v)}" y2="${y(v)}" stroke-width="${v?0.6:1.2}"/><text x="${pad.l-6}" y="${y(v)+4}" text-anchor="end">${v>0?"+":""}${v}</text>`;
+  games.forEach((g,i)=>{
+    const diff = g.us-g.them, bwi = Math.min(bw*0.64,40), x = pad.l+i*bw+(bw-bwi)/2;
+    const cls = diff>0?"pos":diff<0?"neg":"zero";
+    const top = diff>=0?y(diff):mid, hh = Math.max(2,Math.abs(y(diff)-mid));
+    s += `<rect class="${cls}" x="${x}" y="${top}" width="${bwi}" height="${hh}" rx="2"><title>${fmtDate(g.d)} ${g.opp}: ${g.us}:${g.them}</title></rect>`;
+    if (g.s[ME]) s += `<circle class="sami" cx="${x+bwi/2}" cy="${diff>=0?top-8:top+hh+8}" r="5"/>`;
+    if (i===0 || games[i-1].sp!==g.sp) s += `<text x="${x}" y="${h-10}">ST ${g.sp}</text>`;
+  });
+  return s + `</svg>`;
+}
+
+function viewStatistik(){
+  const T = cur(), tt = totals(T), me = tt[ME] || {gp:0,v:[0,0,0,0,0]};
+  const missed = T.games.filter(g=>!g.p.includes(ME));
+  const best = T.games.filter(g=>g.s[ME]).map(g=>({g,pts:g.s[ME][0]*6+g.s[ME][1]})).sort((a,b)=>b.pts-a.pts)[0];
+  const strip = T.games.map(g=>`<i class="${g.s[ME]&&g.s[ME][0]?"td":g.p.includes(ME)?"p":""}" title="${fmtDate(g.d)} · ${g.opp}"></i>`).join("");
+  const nostats = T.games.filter(g=>g.nostats).length;
+  return `<section>
+   <div class="sec-h"><h2>Samis Saison</h2><small>${T.league} · ${DATA[season].label}</small></div>
+   ${best?`<div class="callout"><b>Bestes Spiel</b><p>${fmtDate(best.g.d)}, ${best.g.home?"gegen":"bei"} ${best.g.opp} (${best.g.us}:${best.g.them}): ${STAT.map((s,i)=>best.g.s[ME][i]?best.g.s[ME][i]+" "+STATLONG[s]:"").filter(Boolean).join(", ")}.</p></div>`:""}
+   <div class="panel"><h3>Dabei in ${me.gp} von ${T.games.length} Spielen</h3>
+     <div class="strip" style="grid-template-columns:repeat(${T.games.length},1fr)" aria-label="Spiele der Saison in Reihenfolge">${strip}</div>
+     <div class="strip-legend" style="margin-top:10px"><span style="--c:var(--ink)">gespielt</span><span style="--c:var(--flag)">mit Touchdown</span><span style="--c:var(--line)">nicht dabei</span></div>
+     <p class="note" style="margin-top:8px">${missed.length?`Nicht dabei: ${missed.map(g=>`${fmtDate(g.d)} ${g.home?"gegen":"bei"} ${g.opp}`).join("; ")}.`:"Sami war bei jedem Spiel dabei."}</p></div>
+   <div class="panel"><h3>Samis Werte</h3><div class="tablewrap"><table>
+     <thead><tr><th class="l">Kategorie</th><th>Sami</th><th>Team gesamt</th></tr></thead><tbody>
+     <tr><td class="l">Spiele</td><td>${me.gp}</td><td>${T.games.length}</td></tr>
+     ${STAT.map((s,i)=>`<tr><td class="l">${STATLONG[s]}</td><td>${me.v[i]}</td><td>${sum(Object.values(tt),t=>t.v[i])}</td></tr>`).join("")}
+     </tbody></table></div>
+     <p class="legend">Team gesamt zählt nur, was in den Aufstellungen eingetragen ist.${nostats?` Bei ${nostats} Spielen fehlen die Einzelstatistiken ganz.`:""} Die Summe kann daher unter den tatsächlich erzielten Punkten liegen.</p></div>
+   <div class="panel chart"><h3>Punktedifferenz pro Spiel</h3>${chart(T.games)}
+     <p class="legend">Grün: Sieg, Rot: Niederlage, gelber Punkt: Spiel mit Statistik-Eintrag von Sami. Badgers ${team}: ${sum(T.games,g=>g.us)} Punkte erzielt, ${sum(T.games,g=>g.them)} kassiert.</p></div>
+  </section>`;
+}
+
+function tableHTML(tb){
+  const empty = tb.rows.every(r=>r[1]+r[2]+r[3]===0);
+  return `<div class="panel"><h3>${tb.name}</h3><div class="tablewrap"><table>
+   <thead><tr><th class="l">#</th><th class="l">Team</th>${empty?"":`<th>S</th><th>N</th><th>U</th><th>Punkte</th><th>Diff</th>`}</tr></thead><tbody>
+   ${tb.rows.map((r,i)=>`<tr class="${r[0].startsWith("Münchendorf")?"us":""}"><td class="l">${empty?"–":(i+1)+"."}</td><td class="l name">${r[0]}</td>${empty?"":`<td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}:${r[5]}</td><td>${r[4]-r[5]>0?"+":""}${r[4]-r[5]}</td>`}</tr>`).join("")}
+   </tbody></table></div>${empty?`<p class="legend">Diese Runde hat noch nicht begonnen.</p>`:""}</div>`;
+}
+function viewTabelle(){
+  const T = cur();
+  return `<section><div class="sec-h"><h2>Tabelle ${team} · ${season}</h2><small>${T.league}</small></div>
+   ${T.tables.map(tableHTML).join("")}
+   <p class="note">S = Siege, N = Niederlagen, U = Unentschieden. ${T.tableNote}</p></section>`;
+}
+
+function viewTeam(){
+  const T = cur(), tt = totals(T);
+  const rows = Object.entries(tt).sort((a,b)=>b[1].v[0]-a[1].v[0] || b[1].v[1]-a[1].v[1] || b[1].gp-a[1].gp);
+  return `<section><div class="sec-h"><h2>Badgers ${team} · ${season}</h2><small>Kader laut Aufstellungen</small></div>
+   <div class="panel"><div class="tablewrap"><table>
+   <thead><tr><th class="l">Spieler/in</th><th>Sp</th><th>TD</th><th>XP</th><th>INT</th><th>Sack</th></tr></thead><tbody>
+   ${rows.map(([n,t])=>`<tr class="${n===ME?"me":""}"><td class="l name">${NAMES[n]}</td><td>${t.gp}</td><td>${t.v[0]}</td><td>${t.v[1]}</td><td>${t.v[3]}</td><td>${t.v[4]}</td></tr>`).join("")}
+   </tbody></table></div>
+   <p class="legend">Sp = Spiele, TD = Touchdowns, XP = Extrapunkte, INT = Interceptions. Trainer laut Aufstellung: ${T.coach}.</p></div></section>`;
+}
+
+const VIEWS = {ueberblick:viewUeberblick, spiele:viewSpiele, statistik:viewStatistik, tabelle:viewTabelle, team:viewTeam};
+function render(){
+  const tab = VIEWS[location.hash.slice(1)] ? location.hash.slice(1) : "ueberblick";
+  document.querySelectorAll("#tabs a").forEach(a=>a.setAttribute("aria-current", a.dataset.tab===tab?"page":"false"));
+  document.querySelectorAll("[data-season]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.season===season));
+  document.querySelectorAll("[data-team]").forEach(b=>{ b.setAttribute("aria-pressed", b.dataset.team===team); b.disabled = !DATA[season][b.dataset.team]; b.title = b.disabled ? "In dieser Saison hatten die Badgers kein U15-Team" : ""; });
+  const T = cur();
+  $("#subline").textContent = `${T.league} · ${DATA[season].label}`;
+  renderKeys();
+  $("#main").innerHTML = VIEWS[tab]();
+}
+function save(){ try{ localStorage.setItem("sami-sel", JSON.stringify({season,team})); }catch(e){} }
+document.addEventListener("click", e=>{
+  const s = e.target.closest("[data-season]");
+  if (s){ season = s.dataset.season; if (!DATA[season][team]) team = "U13"; filter="alle"; save(); render(); return; }
+  const t = e.target.closest("[data-team]");
+  if (t && !t.disabled){ team = t.dataset.team; filter="alle"; save(); render(); return; }
+  const go = e.target.closest("[data-go]");
+  if (go){ [season,team] = go.dataset.go.split("|"); filter="alle"; save(); location.hash = "spiele"; render(); window.scrollTo(0,0); return; }
+  const f = e.target.closest(".chips button");
+  if (f){ filter = f.dataset.f; render(); }
+});
+window.addEventListener("hashchange", render);
+render();
+</script>
+</body>
+</html>
